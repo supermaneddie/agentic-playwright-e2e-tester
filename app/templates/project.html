@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.name if project else 'New project' }} · Agentic Playwright E2E Tester{% endblock %}
+{% block content %}
+<a class="back-link" href="/">← All projects</a>
+<section class="page-heading"><h1>{{ project.name if project else 'New project' }}</h1>{% if project %}<button type="button" class="danger" id="delete-project" data-project-id="{{ project.project_id }}">Delete project</button>{% endif %}</section>
+<div id="page-error" role="alert" class="error" hidden></div>
+<details class="panel input-data">
+  <summary>Project information</summary>
+<form id="project-form" data-project-id="{{ project.project_id if project else '' }}">
+  <label for="project-name">Name</label><input id="project-name" name="name" required maxlength="200" value="{{ project.name if project else '' }}">
+  <label for="project-description">Description</label><textarea id="project-description" name="description" rows="4" maxlength="20000">{{ project.description if project else '' }}</textarea>
+  <label for="project-data">Test data <span class="muted">JSON object</span></label><textarea id="project-data" name="test_data" class="code-input" rows="6" spellcheck="false">{{ (project.test_data if project else {}) | tojson(indent=2) }}</textarea>
+  <label for="project-prompt">Additional instructions</label><textarea id="project-prompt" name="prompt" rows="3" maxlength="20000">{{ project.prompt or '' if project else '' }}</textarea>
+  <p class="hint">These inputs are shared by every test case. Changes apply to new runs and retries.</p>
+  <div class="error" role="alert" hidden></div><button class="primary" type="submit">Save project</button>
+</form>
+</details>
+<section class="section-bar"><h2>Test cases</h2><button class="primary" id="new-case-button" type="button" {% if not project %}disabled{% endif %}>+ New test case</button></section>
+{% if project %}
+<div id="case-list" data-poll-url="/api/portal/projects/{{ project.project_id }}/updates" data-poll-ms="10000">{% include 'project_cases.html' %}</div>
+<dialog id="new-case-dialog">
+  <div class="dialog-heading"><div><div class="eyebrow">SET UP A TEST</div><h2>New test case</h2></div><button type="button" id="close-dialog" class="icon-button" aria-label="Close">✕</button></div>
+  <form id="submission-form">
+    <input type="hidden" name="project_id" value="{{ project.project_id }}">
+    <label for="case-name">Test case name</label><input id="case-name" name="name" required maxlength="200" placeholder="e.g. Successful login">
+    <label for="test-type">Test type</label><select id="test-type" name="test_type"><option value="http">HTTP / API</option><option value="browser">Browser / UI (Chromium)</option></select>
+    <label for="depends-on">Depends on</label>
+    <select id="depends-on" name="depends_on" multiple size="4" aria-describedby="depends-on-help">
+      {% for candidate in cases %}{% if not case or candidate.testcase_id != case.testcase_id %}
+      <option value="{{ candidate.testcase_id }}" {% if case and candidate.testcase_id in case.depends_on %}selected{% endif %}>{{ candidate.name or candidate.description[:80] }} ({{ candidate.test_type }})</option>
+      {% endif %}{% endfor %}
+    </select>
+    <p class="hint" id="depends-on-help">Select one or more cases with Ctrl/Cmd. Dependencies must use the same test type and run first in the same session. A failed dependency stops this run.</p>
+    <label for="description">Test description</label><textarea id="description" aria-describedby="description-images-help" name="description" rows="4" required maxlength="20000" placeholder="Describe the behavior and expected results to verify."></textarea>
+    {% include 'case_images.html' %}
+    <label for="test-data">Test data <span class="muted">JSON object</span></label><textarea id="test-data" name="test_data" class="code-input" rows="5" spellcheck="false">{}</textarea>
+    <label for="prompt">Additional instructions <span class="muted">optional</span></label><textarea id="prompt" name="prompt" rows="2" maxlength="20000" placeholder="Anything the planner should take into account."></textarea>
+    <p class="hint">Project description, test data and instructions are inherited. Case values override matching project data keys.</p>
+    <div class="error" role="alert" hidden></div><button class="primary wide" type="submit">Create test case →</button>
+  </form>
+</dialog>
+{% else %}<p class="muted">Save the project before creating test cases.</p>{% endif %}
+{% endblock %}

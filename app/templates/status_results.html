@@ -1,0 +1,3 @@
+{% from 'macros.html' import grouped_results %}
+{% set run = case.run %}
+  <section data-section="results" class="panel"><div class="panel-title"><h2>Testing results</h2><span class="label-small">ASSERTION EVIDENCE</span></div>{{ grouped_results(run) }}</section>

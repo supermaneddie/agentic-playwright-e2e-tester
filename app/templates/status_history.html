@@ -1,0 +1,3 @@
+{% from 'macros.html' import badge, grouped_results %}
+{% set run = case.run %}
+<section data-section="history" class="history" {% if case.runs | length <= 1 %}hidden{% endif %}><h2>Previous attempts</h2>{% for previous in case.runs[1:] %}<details class="panel" data-key="run:{{ previous.id }}"><summary>Attempt {{ previous.attempt }} · {{ previous.status }} · {{ previous.created_at[:16] | replace('T', ' ') }}</summary><p>{{ previous.summary }}</p>{{ grouped_results(previous) }}</details>{% endfor %}</section>

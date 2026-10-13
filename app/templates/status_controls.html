@@ -1,0 +1,17 @@
+{% from 'macros.html' import badge, results %}
+{% set run = case.run %}
+{% set has_plan = (run and run.checklist) or (case.runs | default([]) | selectattr("checklist") | list) %}
+<div data-section="controls" class="run-toolbar"><div class="run-toolbar-actions"><div class="row run-status">{{ badge(case.status) }}<span class="muted">{% if run %}Attempt {{ run.attempt }}{% else %}Ready to start{% endif %}</span></div><div class="controls"><button data-action="plan" title="Plan the test details into a checklist without running tests.">{{ 'Re-plan' if has_plan else 'Plan' }}</button><button class="primary" data-action="start" {% if case.status not in ['submitted', 'planned'] %}disabled{% endif %}>▶ Start</button><button data-action="stop" {% if case.status not in ['running', 'waiting_for_input'] %}disabled{% endif %}>■ Stop</button><div class="action-dropdown">
+  <button type="button" data-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-controls="retry-options" {% if case.status not in ['passed', 'failed', 'error', 'stopped'] %}disabled{% endif %}>↻ Retry ▾</button>
+  <div id="retry-options" class="action-options" role="menu" aria-label="Retry options" hidden>
+    <button type="button" role="menuitem" data-action="retry">Retry everything</button>
+    <button type="button" role="menuitem" data-action="retry" data-steps-only="true" {% if not run or not run.checklist %}disabled title="No checklist is available to retry."{% endif %}>Retry steps only</button>
+  </div>
+</div><div class="action-dropdown">
+  <button type="button" data-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-controls="saved-data-options">Saved answers &amp; inspections ▾</button>
+  <div id="saved-data-options" class="action-options" role="menu" aria-label="Saved answers and inspections" hidden>
+    <button type="button" role="menuitem" data-action="clear-answers" title="Forget saved answers and element inspections so the next retry starts fresh. Stop an active test first." {% if not (case.has_saved_answers or case.has_saved_inspections) or case.status in ['running', 'waiting_for_input'] %}disabled{% endif %}>Clear</button>
+    <a role="menuitem" href="/testcases/{{ case.testcase_id }}/saved-data">View/Edit</a>
+  </div>
+</div><button class="danger" data-action="delete">Delete</button></div></div>
+{% if case.has_saved_answers or case.has_saved_inspections %}<div class="run-toolbar-notes">{% if case.has_saved_answers %}<span class="muted">Answers from a passed run are saved for retries.</span>{% endif %}{% if case.has_saved_inspections %}<span class="muted">Element inspections are saved for retries and checked against the current page before reuse.</span>{% endif %}</div>{% endif %}</div>

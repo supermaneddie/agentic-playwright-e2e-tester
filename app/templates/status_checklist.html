@@ -1,0 +1,16 @@
+{% from 'macros.html' import dependency_summary, checklist_steps %}
+{% set run = case.run %}
+{% set active_step = running_step(run) %}
+<section data-section="checklist" class="panel">
+  <div class="panel-title"><h2>Testing checklist</h2><span class="count">{{ run.checklist | length if run else 0 }}</span></div>
+  {% if run and run.checklist %}
+    {% for group in test_groups(run) %}
+      {% if group.dependency %}
+      <details class="dependency-group" data-key="dependency:{{ run.id }}:{{ group.key }}">
+        {{ dependency_summary(group) }}
+        {{ checklist_steps(group.steps, active_step) }}
+      </details>
+      {% else %}{{ checklist_steps(group.steps, active_step) }}{% endif %}
+    {% endfor %}
+  {% else %}<div class="empty small">Start the test to prepare a checklist.</div>{% endif %}
+</section>

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ case.name or case.project }} · Agentic Playwright E2E Tester{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px;">
+  <a class="back-link" href="/projects/{{ case.project_id }}">← {{ case.project }}</a>
+  <a href="/testcases/{{ case.testcase_id }}/edit" style="flex-shrink: 0;">Edit test case</a>
+</div>
+<div id="case-detail" data-case-id="{{ case.testcase_id }}" data-project-id="{{ case.project_id }}" data-run-id="{{ case.run.id if case.run else '' }}" data-poll-url="/api/portal/testcases/{{ case.testcase_id }}/updates" data-poll-ms="3000">{% include 'case_status.html' %}</div>
+<details class="panel input-data"><summary>Combined project and test case data</summary><pre>{{ case.test_data | tojson(indent=2) }}</pre>{% if case.prompt %}<h3>Additional instructions</h3><p class="description">{{ case.prompt }}</p>{% endif %}</details>
+<dialog id="screenshot-dialog" aria-labelledby="screenshot-title">
+  <div class="dialog-heading"><h2 id="screenshot-title">Screenshot</h2><button type="button" id="close-screenshot" class="icon-button" aria-label="Close screenshot" autofocus>✕</button></div>
+  <img id="screenshot-image" alt="">
+</dialog>
+{% endblock %}

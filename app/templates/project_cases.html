@@ -1,0 +1,8 @@
+{% from 'macros.html' import badge %}
+<div data-section="cases" class="panel"><p class="muted">{{ cases | length }} test cases</p>
+{% if cases %}
+  <div class="table-wrap"><table><thead><tr><th>Test case</th><th>Status</th><th>Attempt</th><th>Created (UTC)</th><th></th></tr></thead><tbody>
+    {% for case in cases %}<tr data-key="case:{{ case.testcase_id }}"><td><a class="case-link" href="/testcases/{{ case.testcase_id }}">{{ (case.name or case.description) | truncate(105) }}</a><span class="case-id">{{ case.testcase_id[:8] }}</span></td><td>{{ badge(case.status) }}</td><td>{{ case.attempt or '—' }}</td><td class="date">{{ case.created_at[:16] | replace('T', ' ') }}</td><td><div class="row"><a class="arrow-link" aria-label="View test case" href="/testcases/{{ case.testcase_id }}">↗</a><button class="danger" data-action="delete" data-case-id="{{ case.testcase_id }}" aria-label="Delete test case {{ case.testcase_id[:8] }}">Delete</button></div></td></tr>{% endfor %}
+  </tbody></table></div>
+{% else %}<p>No test cases yet. Create one to get started.</p>{% endif %}
+</div>

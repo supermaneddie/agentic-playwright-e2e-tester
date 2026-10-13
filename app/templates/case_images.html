@@ -1,0 +1,11 @@
+<p class="hint" id="description-images-help">Drag and drop images onto the Test description, paste images with Ctrl+V (Cmd+V on Mac), or choose files below. Preview and name each image, then refer to its name in your description.</p>
+<label for="case-images">Reference images <span class="muted">optional</span></label>
+<input id="case-images" type="file" accept="image/png,image/jpeg,image/webp" multiple aria-describedby="case-images-help">
+<p class="hint" id="case-images-help">Add screenshots or other references for planning steps. PNG, JPEG or WebP; up to 10 images, 5 MiB each and 20 MiB total. Images are sent to the planning model.</p>
+<div id="case-image-previews" class="case-images" aria-live="polite"></div>
+<p class="hint">Click an image preview to view it at actual size.</p>
+<dialog id="case-image-dialog" aria-labelledby="case-image-title">
+  <div class="dialog-heading"><h2 id="case-image-title">Reference image</h2><button type="button" id="close-case-image" class="icon-button" aria-label="Close image" autofocus>✕</button></div>
+  <div class="case-image-viewport"><img id="case-image-full" alt=""></div>
+</dialog>
+<script id="case-image-data" type="application/json">{{ (case.images | default([]) if case else []) | tojson }}</script>

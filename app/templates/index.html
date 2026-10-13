@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-heading"><div><div class="eyebrow">YOUR TESTING WORKSPACE</div><h1>Projects</h1><p class="muted">Shared context and test cases for each project.</p></div><a class="primary" href="/projects/new">+ New project</a></section>
+<div id="page-error" role="alert" class="error" hidden></div>
+<div id="project-list" data-poll-url="/api/portal/projects/updates" data-poll-ms="10000">{% include 'case_list.html' %}</div>
+{% endblock %}

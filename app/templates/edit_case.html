@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Edit test case · Agentic Playwright E2E Tester{% endblock %}
+{% block content %}
+<a class="back-link" href="/testcases/{{ case.testcase_id }}">← Back to test case</a>
+<section class="page-heading"><h1>Edit test case</h1></section>
+<form id="edit-case-form" class="panel" data-case-id="{{ case.testcase_id }}">
+  <label for="case-name">Test case name</label><input id="case-name" name="name" required maxlength="200" value="{{ case.name or '' }}">
+  <label for="test-type">Test type</label><select id="test-type" name="test_type"><option value="http" {% if case.test_type == 'http' %}selected{% endif %}>HTTP / API</option><option value="browser" {% if case.test_type == 'browser' %}selected{% endif %}>Browser / UI (Chromium)</option></select>
+  <label for="depends-on">Depends on</label>
+  <select id="depends-on" name="depends_on" multiple size="4" aria-describedby="depends-on-help">
+    {% for candidate in cases %}{% if not case or candidate.testcase_id != case.testcase_id %}
+    <option value="{{ candidate.testcase_id }}" {% if case and candidate.testcase_id in case.depends_on %}selected{% endif %}>{{ candidate.name or candidate.description[:80] }} ({{ candidate.test_type }})</option>
+    {% endif %}{% endfor %}
+  </select>
+  <p class="hint" id="depends-on-help">Select one or more cases with Ctrl/Cmd. Dependencies must use the same test type and run first in the same session. A failed dependency stops this run.</p>
+  <label for="description">Test description</label><textarea id="description" aria-describedby="description-images-help" name="description" rows="4" required maxlength="20000">{{ case.own_inputs.description }}</textarea>
+  {% include 'case_images.html' %}
+  <label for="test-data">Test data <span class="muted">JSON object</span></label><textarea id="test-data" name="test_data" class="code-input" rows="8" spellcheck="false">{{ case.own_inputs.test_data | tojson(indent=2) }}</textarea>
+  <label for="prompt">Additional instructions</label><textarea id="prompt" name="prompt" rows="3" maxlength="20000">{{ case.own_inputs.prompt or '' }}</textarea>
+  <p class="hint">Project description, test data and instructions are inherited. Case values override matching project data keys.</p>
+  <p>Saving will permanently clear all previous results for this test case, including attempts, logs, screenshots and checkpoints. Any active run will be stopped.</p>
+  <div class="error" role="alert" hidden></div>
+  <p id="edit-loading" role="status">Loading editor… If Save stays disabled, reload this page and check that JavaScript is enabled.</p>
+  <button class="primary" type="submit" disabled>Save changes</button>
+  <a href="/testcases/{{ case.testcase_id }}">Cancel</a>
+</form>
+{% endblock %}

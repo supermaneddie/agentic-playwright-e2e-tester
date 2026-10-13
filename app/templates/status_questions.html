@@ -1,0 +1,48 @@
+{% from 'macros.html' import badge, results %}
+{% set run = case.run %}
+<section data-section="questions" class="question-panel" {% if case.status != 'waiting_for_input' %}hidden{% endif %}>
+{% if case.status == 'waiting_for_input' %}
+<details class="question-disclosure" data-key="questions:{{ run.id }}:{{ run.questions | tojson | forceescape }}" open>
+<summary><span class="eyebrow">YOUR INPUT IS NEEDED</span><span class="question-toggle"><span class="when-expanded">Collapse</span><span class="when-collapsed">Expand</span></span></summary>
+<div class="question-content"><h2>Help the assistant continue</h2><p>The workflow is saved and will resume when you respond.</p>
+<form id="answer-form" data-run-id="{{ run.id }}" data-question-signature="{{ run.questions | tojson | forceescape }}">
+  {% for question in run.questions %}
+  <label for="answer-{{ run.id }}-{{ question.key }}">{{ question.question }}</label>
+  {% if question.options %}
+  <select id="answer-{{ run.id }}-{{ question.key }}" data-answer-key="{{ question.key }}" required>
+    <option value="" disabled selected>Choose an answer</option>
+    {% for option in question.options %}<option value="{{ option.value }}">{{ option.label }}</option>{% endfor %}
+  </select>
+  {% elif question.inspection %}
+  <div class="inspection-picker" data-inspection-key="{{ question.key }}">
+    <label>Locate by
+      <select data-inspection-mode><option value="prompt">By prompt</option><option value="css">By CSS selector</option></select>
+    </label>
+    <label>Element description or CSS selector
+      <input type="text" data-inspection-query autocomplete="off" placeholder="Describe the element to locate">
+    </label>
+    <div class="inspection-scroll-controls" role="group" aria-label="Browser view">
+      <button type="button" data-inspection-view="preview">Show current view</button>
+      <button type="button" data-inspection-view="up">↑ Scroll up</button>
+      <button type="button" data-inspection-view="down">↓ Scroll down</button>
+      <button type="button" data-inspection-view="left">← Scroll left</button>
+      <button type="button" data-inspection-view="right">→ Scroll right</button>
+    </div>
+    <p class="hint">For a scrollable panel, click inside it on the screenshot to choose where to scroll. Then locate and select the element in the current view.</p>
+    <button type="button" data-inspection-locate>Locate with LLM</button>
+    <input type="hidden" data-answer-key="{{ question.key }}" value="">
+    <p data-inspection-status role="status">Locate matches, then click a highlighted result to confirm.</p>
+    <div class="inspection-image" hidden><img alt="Current browser view; click inside a panel to choose where to scroll"><div class="inspection-overlays"></div></div>
+    <div class="inspection-results"></div>
+  </div>
+  {% else %}
+  {% set json_answer = question.key in ['headers', 'auth_headers'] %}
+  {% set masked = question.secret or json_answer %}
+  <input id="answer-{{ run.id }}-{{ question.key }}" type="{{ 'password' if masked else 'text' }}" data-answer-key="{{ question.key }}" {% if json_answer %}data-answer-format="json" placeholder='{"Authorization": "Bearer your-token"}'{% endif %} autocomplete="off" {% if masked %}spellcheck="false" autocapitalize="off"{% elif question.choices %}list="choices-{{ run.id }}-{{ question.key }}"{% endif %} required>
+  {% if question.choices and not masked %}<datalist id="choices-{{ run.id }}-{{ question.key }}">{% for choice in question.choices %}<option value="{{ choice }}"></option>{% endfor %}</datalist>{% endif %}
+  {% endif %}
+  {% endfor %}
+  <div class="error" role="alert" hidden></div><button class="primary" type="submit">Submit &amp; resume →</button>
+</form>
+</div></details>
+{% endif %}</section>

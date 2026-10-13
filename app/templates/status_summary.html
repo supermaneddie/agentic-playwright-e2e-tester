@@ -1,0 +1,3 @@
+{% from 'macros.html' import badge, results %}
+{% set run = case.run %}
+<p data-section="summary" class="run-summary" {% if not run or not run.summary %}hidden{% endif %}>{{ run.summary if run else "" }}</p>

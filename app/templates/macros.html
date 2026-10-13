@@ -1,0 +1,93 @@
+{% macro badge(status) -%}
+{% if status == 'waiting_for_input' %}<span class="badge {{ status }}" role="status" aria-label="Waiting for input" title="Waiting for input"><span class="running-spinner" aria-hidden="true"></span></span>{% else %}<span class="badge {{ status }}"><span class="status-dot"></span>{{ status | replace('_', ' ') }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro results(items) -%}
+{% if items %}
+<div class="results-list">
+  {% for result in items %}
+  <article data-key="result-{{ loop.index }}" class="result {% if result.superseded %}superseded{% endif %}">
+    <div class="row"><strong>{% if result.step is defined %}{{ result.step }}. {% endif %}{{ result.title }}</strong>{{ badge(result.outcome) }}</div>
+    <p class="muted">{% if result.status_code %}HTTP {{ result.status_code }}{% endif %}{% if result.duration_ms is defined %} · {{ result.duration_ms }} ms{% endif %}{% if result.superseded %} · {{ 'Paused for clarification; execution continues after your answer' if result.kind == 'browser' else 'Authentication attempt; a retry follows' }}{% endif %}</p>
+    {% if result.attempt is defined %}<p class="muted">Attempt {{ result.attempt }}</p>{% endif %}
+    {% if result.attempts %}<details><summary>Previous attempts ({{ result.attempts | length }})</summary>{{ results(result.attempts) }}</details>{% endif %}
+    {% if result.message %}<p>{{ result.message }}</p>{% endif %}
+    {% if result.kind == 'browser' %}<p class="muted">{{ result.actions_completed }} browser actions completed</p>{% endif %}
+    {% for observation in result.observations | default([]) %}<p class="muted">Action {{ observation.action }}: {{ observation.note }}</p>{% endfor %}
+    {% if result.screenshot_url %}<p><button type="button" class="screenshot-button" data-screenshot-url="{{ result.screenshot_url }}" data-screenshot-title="{% if result.step is defined %}{{ result.step }}. {% endif %}{{ result.title }}" aria-haspopup="dialog" aria-controls="screenshot-dialog">View screenshot</button></p>{% endif %}
+    {% if result.screenshot_note %}<p class="muted">{{ result.screenshot_note }}</p>{% endif %}
+    {% for check in result.assertions %}<div class="assertion"><span class="{{ 'ok' if check.passed else 'bad' }}">{{ 'Skipped (target absent)' if check.skipped else ('✓' if check.passed else '✕') }}</span> {{ check.type | replace('_', ' ') }}{% if check.path %} · Target: <code>{{ check.path }}</code>{% endif %}{% if check.error %} — {{ check.error }}{% endif %}
+      {% if check.details %}
+      <dl>
+        <dt>Expected</dt><dd><code>{{ check.details.expected | tojson }}</code></dd>
+        <dt>Actual (after failure)</dt><dd><code>{{ check.details.actual | tojson }}</code></dd>
+        {% if check.details.selector %}<dt>Selector checked</dt><dd><code>{{ check.details.selector }}</code></dd>{% endif %}
+        {% if check.details.matched_count is defined %}<dt>Matching elements</dt><dd>{{ check.details.matched_count }}</dd>{% endif %}
+        {% if check.details.element %}<dt>Matched element</dt><dd><code>{{ check.details.element | tojson }}</code></dd>{% endif %}
+        <dt>Assertion timeout</dt><dd>{{ check.details.timeout_ms }} ms</dd>
+        <dt>Observation</dt><dd>{{ check.details.observation }} ({{ check.details.exception_type }})</dd>
+      </dl>
+      {% endif %}
+    </div>{% endfor %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}<div class="empty small">Results will appear as requests finish.</div>{% endif %}
+{%- endmacro %}
+
+{% macro log_line(log) -%}
+<div class="log-line" data-log-id="{{ log.id }}" data-kind="{{ log.kind }}"><time>{{ log.created_at[11:19] }}</time>{% if log.kind == 'graph' %}<code>{{ log.message }}</code>{% else %}<span>{{ log.message }}</span>{% endif %}</div>
+{%- endmacro %}
+
+{% macro dependency_summary(group) -%}
+<summary>
+  <span class="dependency-heading">
+    <span><span class="dependency-label">Dependency</span><strong>{{ group.dependency.name }}</strong></span>
+    <span class="dependency-progress"><span class="muted">{{ group.passed }}/{{ group.total }} steps passed</span>{{ badge(group.outcome) }}</span>
+  </span>
+</summary>
+{%- endmacro %}
+
+{% macro checklist_steps(items, active_step) -%}
+{% if items %}<ol class="checklist" start="{{ items[0].index }}">
+  {% for item in items %}{% set step = item.step %}
+  <li value="{{ item.index }}" data-key="step-{{ item.index }}"{% if item.index == active_step %} class="is-running" aria-current="step"{% endif %}>
+    {% if item.index == active_step %}<span class="running-icon" role="img" aria-label="Running" title="Running">&#x27A9;</span><span class="running-spinner" aria-hidden="true"></span>{% endif %}<strong>{{ step.title }}</strong>
+    {% if step.kind == 'browser' %}
+      <div><code class="method">BROWSER</code> · {{ step.actions | length }} actions{% if step.max_retries %} · Up to {{ step.max_retries }} retries on failure{% endif %}</div>
+      {% for action in step.actions %}<div><code>{{ action.action }}{% if action.if_present %} (if present){% endif %} {% if action.target %}<strong>{{ action.target }}</strong>{% else %}{{ action.selector or action.path or '' }}{% endif %}{% if action.action == 'fill_from_image' %} ← {% if action.image_target %}<strong>{{ action.image_target }}</strong>{% else %}{{ action.image_selector }}{% endif %}{% endif %}</code></div>{% endfor %}
+    {% else %}<div><code class="method">{{ step.method }}</code> <code>{{ step.path }}</code></div>{% endif %}
+    {% if step.assertions %}
+    <details class="planned-assertions" data-key="assertions-{{ item.index }}">
+      <summary class="muted">{{ step.assertions | length }} assertion{{ 's' if step.assertions | length != 1 }}</summary>
+      {% for check in step.assertions %}
+      <div class="planned-assertion">
+        <strong>{{ check.type | replace('_', ' ') }}</strong>{% if check.if_present %} <span class="muted">(if present)</span>{% endif %}
+        {% if check.target %}<div>Target: <code>{{ check.target }}</code></div>{% endif %}
+        {% if check.selector %}<div>Selector: <code>{{ check.selector }}</code></div>{% endif %}
+        {% if check.path %}<div>Path: <code>{{ check.path }}</code></div>{% endif %}
+        {% if check.expected_from_action is defined and check.expected_from_action is not none %}
+        <div>Expected: value read from image in action {{ check.expected_from_action }}</div>
+        {% elif check.expected is defined and (check.expected is not none or step.kind != 'browser') %}
+        <div>Expected: <code>{{ check.expected if check.expected is string and check.expected != '' else check.expected | tojson }}</code></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </details>
+    {% else %}<span class="muted">0 assertions</span>{% endif %}
+  </li>{% endfor %}
+</ol>{% endif %}
+{%- endmacro %}
+
+{% macro grouped_results(run) -%}
+{% if run and run.results %}
+  {% for group in test_groups(run) %}
+    {% if group.dependency %}
+    <details class="dependency-group" data-key="dependency:{{ run.id }}:{{ group.key }}">
+      {{ dependency_summary(group) }}
+      {% if group.results %}{{ results(group.results) }}{% else %}<div class="empty small">No steps have run yet.</div>{% endif %}
+    </details>
+    {% elif group.results %}{{ results(group.results) }}{% endif %}
+  {% endfor %}
+{% else %}<div class="empty small">Results will appear as requests finish.</div>{% endif %}
+{%- endmacro %}

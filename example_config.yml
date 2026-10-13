@@ -1,0 +1,23 @@
+llm:
+  # OpenAI-compatible chat completions base URL (include /v1 when required).
+  url: ${LLM_URL}
+  model: ${LLM_MODEL_NAME}
+  api_key: ${LLM_API_KEY}
+server:
+  host: 0.0.0.0
+  port: 8091
+storage:
+  directory: ./data
+testing:
+  request_timeout: 30
+  max_response_bytes: 1048576
+  max_steps: 30
+browser:
+  headless: true
+  action_timeout: 15
+  step_timeout: 120
+  screenshots: true
+  max_sessions: 4
+  auto_selectors: true
+  # Enable only with an image-capable LLM; sends masked full-page screenshots.
+  vision: true

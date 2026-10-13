@@ -1,0 +1,20 @@
+{% from 'macros.html' import log_line %}
+{% include 'status_description.html' %}
+<div id="page-error" role="alert" class="error" hidden></div>
+<p class="muted">{{ 'Browser / UI · Chromium' if case.test_type == 'browser' else 'HTTP / API' }}</p>
+{% include 'status_controls.html' %}
+{% include 'status_questions.html' %}
+{% include 'status_summary.html' %}
+<div class="detail-grid">
+  {% include 'status_checklist.html' %}
+  {% include 'status_results.html' %}
+</div>
+<div class="detail-grid logs-grid">
+  <section class="panel"><div class="panel-title"><h2>Current progress</h2><span class="live-dot"></span></div>
+    <div id="progress-logs" class="log-list">{% for log in case.logs if log.kind == 'progress' %}{{ log_line(log) }}{% endfor %}<p class="muted log-empty" {% if case.logs | selectattr('kind', 'equalto', 'progress') | list %}hidden{% endif %}>No activity yet.</p></div>
+  </section>
+  <section class="panel graph-panel"><div class="panel-title"><h2>LangGraph log</h2><span class="label-small">NODE EVENTS</span></div>
+    <div id="graph-logs" class="log-list">{% for log in case.logs if log.kind == 'graph' %}{{ log_line(log) }}{% endfor %}<p class="muted log-empty" {% if case.logs | selectattr('kind', 'equalto', 'graph') | list %}hidden{% endif %}>Graph events will appear here.</p></div>
+  </section>
+</div>
+{% include 'status_history.html' %}

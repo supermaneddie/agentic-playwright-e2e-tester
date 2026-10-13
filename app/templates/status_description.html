@@ -1,0 +1,7 @@
+<section data-section="description" class="page-heading detail-heading"><div><div class="eyebrow">{{ case.project }}</div><h1>{{ case.name or 'Test case' }} <span class="muted">{{ case.testcase_id[:8] }}</span></h1><p class="description">{% for segment in description_segments(case.description, case.run.checklist if case.run else []) %}{% if segment.matched %}<strong>{{ segment.text }}</strong>{% else %}{{ segment.text }}{% endif %}{% endfor %}</p>
+{% if case.dependencies %}
+<div class="dependency-tags" aria-label="Test dependencies">
+  {% for dependency in case.dependencies %}<a class="dependency-tag" href="/testcases/{{ dependency.testcase_id }}">depends on {{ dependency.name }}</a>{% endfor %}
+</div>
+{% endif %}
+</div></section>

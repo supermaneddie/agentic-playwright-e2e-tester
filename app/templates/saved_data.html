@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Saved answers & inspections · Agentic Playwright E2E Tester{% endblock %}
+{% block content %}
+<a class="back-link" href="/testcases/{{ case.testcase_id }}">← Back to test case</a>
+<section class="page-heading"><h1>Saved answers &amp; inspections</h1><p>{{ case.name or case.description }}</p></section>
+<form id="saved-data-form" class="panel" data-case-id="{{ case.testcase_id }}" data-revision="{{ saved.revision }}">
+  <p>Changes apply to the next retry. Removing an answer lets the test request it again when needed. Removed inspections will be located again.</p>
+  {% if not saved.editable %}<p role="status">This test is active. Stop it and reload this page to edit saved data.</p>{% endif %}
+  <fieldset {% if not saved.editable %}disabled{% endif %}>
+    <legend>Saved answers</legend>
+    {% for answer in saved.answers %}
+    <div class="saved-answer" data-key="{{ answer.key }}" data-format="{{ answer.format }}">
+      <h3>{{ answer.key }}</h3>
+      {% if answer.inspection %}
+      <p>Confirmed element selection. Remove it to choose another element on retry.</p>
+      {% if not answer.secret %}<pre>{{ answer.value | tojson(indent=2) }}</pre>{% endif %}
+      {% else %}
+      <label for="saved-answer-{{ loop.index }}">{% if answer.secret %}Replace hidden value (leave blank to keep){% else %}Value{% endif %} · {{ 'plain text' if answer.format == 'text' else 'JSON' }}</label>
+      {% if answer.secret %}
+      <input id="saved-answer-{{ loop.index }}" type="password" data-saved-value autocomplete="new-password" spellcheck="false" value="">
+      {% else %}
+      <textarea id="saved-answer-{{ loop.index }}" data-saved-value rows="3" spellcheck="false">{{ answer.value if answer.format == 'text' else answer.value | tojson(indent=2) }}</textarea>
+      {% endif %}
+      {% endif %}
+      <label><input type="checkbox" data-remove-answer> Remove this answer</label>
+    </div>
+    {% else %}<p>No saved answers.</p>{% endfor %}
+  </fieldset>
+  <fieldset {% if not saved.editable %}disabled{% endif %}>
+    <legend>Saved inspections</legend>
+    <p>Element locations are validated against the current page before reuse. Remove an inspection to refresh its location.</p>
+    {% for inspection in saved.inspections %}
+    <details><summary>Inspection {{ loop.index }} · {{ inspection.value.path | default('Element location') }}</summary>
+      <p class="muted">{{ inspection.key }}</p><pre>{{ inspection.value | tojson(indent=2) }}</pre>
+      <label><input type="checkbox" data-remove-inspection="{{ inspection.key }}"> Remove this inspection</label>
+    </details>
+    {% else %}<p>No saved inspections.</p>{% endfor %}
+  </fieldset>
+  <p class="error" role="alert" hidden></p>
+  <p data-save-status role="status"></p>
+  <button type="submit" class="primary" {% if not saved.editable %}disabled{% endif %}>Save changes</button>
+</form>
+{% endblock %}

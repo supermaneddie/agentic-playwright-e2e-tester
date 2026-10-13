@@ -1,0 +1,4 @@
+<section data-section="project:{{ project.project_id }}" class="panel project-card">
+  <div class="section-bar"><h2><a href="/projects/{{ project.project_id }}">{{ project.name }}</a></h2><span class="count">{{ project.testcase_count }} test cases</span></div>
+  {% if project.description %}<p class="description">{{ project.description | truncate(200) }}</p>{% endif %}
+</section>
